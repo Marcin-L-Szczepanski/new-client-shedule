@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>New Clients Schedule</title>
+          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+       <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css">
+  
+</head>
+
+<body>
+   <div id="app" class="container-fluid">
+            <!-- navigation bar -->
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <a class="navbar-brand"><i class="glyphicon glyphicon-calendar"></i> New Client Schedule</a>
+        </div>
+      </nav>
+          <div class="col-xs-3">
+          <div class="panel panel-default">
+             <div class="panel-heading">
+                <h3>Add Client</h3>
+              </div>
+              <div class="panel-body">
+                 <form id="form" class="form" v-on:submit.prevent="addClient">
+                    <div class="form-group">
+                       <label for="clientName">Name:</label>
+                        <input type="text" id="clientName" class="form-control" v-model="newClient.name">
+                    </div>
+                     <div class="form-group">
+                       <label for="clientType">Type:</label>
+                        <select id="clientType" class="form-control" v-model="newClient.type">
+                            <option>Existing Entity</option>
+                            <option>New Entity</option>
+                         </select>
+                    </div>
+                     <div class="form-group">
+                       <label for="followUp">Follow-up:</label>
+                        <input type="date" id="followUp" class="date-picker" v-model="newClient.followUp">
+                    </div>
+                     <div class="form-group">
+                       <label for="parallelRun">Parallel Run:</label>
+                        <input type="date" id="parallelRun" class="date-picker" v-model="newClient.parallelRun">
+                    </div>
+                     <input type="submit" class="btn btn-primary" value="Add Client" v-on:click="addClient">
+                 </form>
+              </div>
+          </div>
+          </div>
+            <div class="col-xs-9">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3> Client Lists</h3>
+            </div>
+              <div class="panel-body">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>
+                      Name
+                    </th>
+                    <th>
+                      Type
+                    </th>
+                      <th>
+                      Follow-up
+                    </th>
+                    <th>
+                      Parallel Run
+                    </th>
+                      <th>
+                      Edit
+                    </th>
+                      <th>
+                      Delete
+                    </th>
+                  </tr>
+                </thead>
+                  <tbody>
+                   <tr v-for="client in clients">
+                      <td>
+                       {{ client.name }}
+                       </td>
+                       <td>
+                       {{ client.type }}
+                       </td>
+                       <td>
+                       {{ client.followUp }}
+                       </td>
+                       <td>
+                       {{ client.parallelRun }}
+                       </td>
+                       <td>
+                           <a href="#"><span class="glyphicon glyphicon-edit" v-on:click="editClient(client)" v-bind:id="client['.key']"></span></a>
+                       </td>
+                       <td>
+                          <a href="#"><span class="glyphicon glyphicon-trash" v-on:click="removeClient(client)"></span></a>
+                       </td>
+                   </tr>
+                  </tbody>
+               </table>
+              </div>
+          </div>
+        </div>
+      </div>
+  <script src='https://unpkg.com/vue/dist/vue.js'></script>
+<script src='https://www.gstatic.com/firebasejs/3.6.10/firebase.js'></script>
+<script src='https://unpkg.com/vuefire/dist/vuefire.js'></script>
+
+    <script>var config = {
+        databaseURL: "https://new-clients-schedule.firebaseio.com/"
+        };
+      firebase.initializeApp(config);
+
+var db = firebase.database();
+var clientRef = db.ref('clients');
+var app = new Vue({
+    el:"#app",
+    firebase:{
+      clients: db.ref('clients')
+    },
+    data:{
+      newClient: {
+            name: '',
+            type: '',
+            followUp: '',
+            parallelRun: ''
+          }
+    },
+    methods: {
+      addClient: function() {
+          var key = this.newClient['.key'];
+          if(typeof key === 'undefined'|| key === '') {
+              clientRef.push(this.newClient);
+          }
+          else {
+              clientRef.child(key).child('name').set(this.newClient.name);
+              clientRef.child(key).child('type').set(this.newClient.type);
+              clientRef.child(key).child('followUp').set(this.newClient.followUp);
+              clientRef.child(key).child('parallelRun').set(this.newClient.parallelRun);
+          }
+          this.newClient.name = '';
+          this.newClient.type = '';
+          this.newClient.followUp = '';
+          this.newClient.parallelRun = '';
+          delete this.newClient['.key']
+          toastr.success("Client saved");
+      },
+      removeClient: function(client) {
+          clientRef.child(client['.key']).remove();
+          toastr.warning("Client deleted");
+      },
+      editClient: function(client){
+        this.$bindAsObject('newClient',db.ref('clients').child(client['.key']));
+      }
+  }
+  
+});</script>
+
+</body>
+</html>
